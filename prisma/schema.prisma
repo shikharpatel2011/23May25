@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  email         String    @unique
+  password      String
+  role          UserRole  @default(JOB_SEEKER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  postedJobs    Job[]     @relation("PostedJobs")
+  savedJobs     SavedJob[]
+}
+
+model Job {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  company     String
+  location    String
+  description String
+  salary      String?
+  type        JobType   @default(FULL_TIME)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  provider    User      @relation("PostedJobs", fields: [providerId], references: [id])
+  providerId  String    @db.ObjectId
+  savedBy     SavedJob[]
+}
+
+model SavedJob {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @db.ObjectId
+  job       Job      @relation(fields: [jobId], references: [id])
+  jobId     String   @db.ObjectId
+  savedAt   DateTime @default(now())
+
+  @@unique([userId, jobId])
+}
+
+enum UserRole {
+  JOB_SEEKER
+  JOB_PROVIDER
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  REMOTE
+} 
